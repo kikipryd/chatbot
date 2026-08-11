@@ -1,0 +1,31 @@
+# Built artifacts
+*.pyc
+__pycache__/
+*.db
+saas_chatbot.db
+.ipynb_checkpoints/
+
+# Flutter/Dart artifacts
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+flutter_chatbot_sdk/build/
+flutter_example_app/build/
+flutter_example_app/.dart_tool/
+flutter_example_app/.flutter-plugins
+flutter_example_app/.flutter-plugins-dependencies
+flutter_example_app/.packages
+flutter_example_app/web/flutter_bootstrap.js
+flutter_example_app/android/.gradle/
+flutter_example_app/ios/.symlinks/
+flutter_example_app/ios/Pods/
+flutter_example_app/macos/Flutter/ephemeral/
+flutter_example_app/windows/flutter/ephemeral/
+flutter_example_app/linux/flutter/ephemeral/
+
+# Logs and databases
+*.log
+sqlite.db
+node_modules/
