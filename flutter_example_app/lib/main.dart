@@ -34,8 +34,6 @@ class _DemoHomeScreenState extends State<DemoHomeScreen> {
   final TextEditingController _serverUrlController = TextEditingController(text: 'http://localhost:8000');
   final TextEditingController _apiKeyController = TextEditingController(text: 'Paste_Your_Public_SDK_Key_Here');
   final TextEditingController _chatbotIdController = TextEditingController(text: 'Paste_Your_Chatbot_Id_Here');
-  final TextEditingController _titleController = TextEditingController(text: 'Asisten Layanan Pelanggan');
-  final TextEditingController _greetingController = TextEditingController(text: 'Halo! Ada yang bisa saya bantu terkait produk atau layanan kami?');
 
   Color _selectedPrimaryColor = const Color(0xFF4F46E5);
   bool _useFloatingBubble = false;
@@ -122,8 +120,6 @@ class _DemoHomeScreenState extends State<DemoHomeScreen> {
                       baseUrl: _serverUrlController.text.trim(),
                       apiKey: _apiKeyController.text.trim(),
                       chatbotId: _chatbotIdController.text.trim(),
-                      title: _titleController.text.trim(),
-                      greetingMessage: _greetingController.text.trim(),
                       primaryColor: _selectedPrimaryColor,
                       accentColor: _selectedPrimaryColor.withOpacity(0.8),
                     ),
@@ -174,8 +170,6 @@ class _DemoHomeScreenState extends State<DemoHomeScreen> {
                 baseUrl: _serverUrlController.text.trim(),
                 apiKey: _apiKeyController.text.trim(),
                 chatbotId: _chatbotIdController.text.trim(),
-                title: _titleController.text.trim(),
-                greetingMessage: _greetingController.text.trim(),
                 primaryColor: _selectedPrimaryColor,
               ),
             ),
@@ -306,24 +300,6 @@ class _DemoHomeScreenState extends State<DemoHomeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Judul Bot', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
-                      const SizedBox(height: 6),
-                      TextField(
-                        controller: _titleController,
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                          isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
                       const Text('Pilih Tema Warna', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
                       const SizedBox(height: 6),
                       Container(
@@ -369,19 +345,6 @@ class _DemoHomeScreenState extends State<DemoHomeScreen> {
                   ),
                 ),
               ],
-            ),
-            const SizedBox(height: 16),
-
-            // Greeting message
-            const Text('Pesan Selamat Datang', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
-            const SizedBox(height: 6),
-            TextField(
-              controller: _greetingController,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                isDense: true,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              ),
             ),
             const SizedBox(height: 16),
 

@@ -8,9 +8,7 @@ class ChatbotWidget extends StatefulWidget {
   final String apiKey;
   final String chatbotId;
 
-  // Customization styling options (Optional local overrides, defaults will load from API)
-  final String? title;
-  final String? greetingMessage;
+  // Customization styling options
   final Color primaryColor;
   final Color accentColor;
   final Color backgroundColor;
@@ -26,8 +24,6 @@ class ChatbotWidget extends StatefulWidget {
     required this.baseUrl,
     required this.apiKey,
     required this.chatbotId,
-    this.title,
-    this.greetingMessage,
     this.primaryColor = const Color(0xFF4F46E5), // Indigo
     this.accentColor = const Color(0xFF6366F1), // Indigo accent
     this.backgroundColor = const Color(0xFFF8FAFC), // Slate 50
@@ -54,7 +50,7 @@ class _ChatbotWidgetState extends State<ChatbotWidget> {
   bool _isStreaming = false;
   String _streamResponseBuffer = '';
 
-  // Dynamic values loaded from API
+  // Dynamic values loaded strictly from API
   String _dynamicTitle = 'Loading assistant...';
   String _dynamicGreetingMessage = 'Halo! Ada yang bisa saya bantu?';
 
@@ -71,17 +67,17 @@ class _ChatbotWidgetState extends State<ChatbotWidget> {
     });
 
     try {
-      // 1. Fetch Chatbot dynamic Info from API first!
+      // 1. Fetch Chatbot dynamic Info strictly from API!
       final info = await _client.getChatbotInfo(widget.chatbotId);
       setState(() {
-        _dynamicTitle = widget.title ?? (info['name'] as String? ?? 'AI Assistant');
-        _dynamicGreetingMessage = widget.greetingMessage ?? (info['greeting_message'] as String? ?? 'Halo!');
+        _dynamicTitle = info['name'] as String? ?? 'AI Assistant';
+        _dynamicGreetingMessage = info['greeting_message'] as String? ?? 'Halo!';
       });
     } catch (e) {
-      print('Failed to fetch chatbot info: $e. Falling back to local overrides or defaults.');
+      print('Failed to fetch chatbot info: $e. Falling back to default values.');
       setState(() {
-        _dynamicTitle = widget.title ?? 'AI Assistant';
-        _dynamicGreetingMessage = widget.greetingMessage ?? 'Halo! Ada yang bisa saya bantu hari ini?';
+        _dynamicTitle = 'AI Assistant';
+        _dynamicGreetingMessage = 'Halo! Ada yang bisa saya bantu hari ini?';
       });
     }
 
@@ -484,8 +480,6 @@ class FloatingChatbotButton extends StatefulWidget {
   final String baseUrl;
   final String apiKey;
   final String chatbotId;
-  final String? title;
-  final String? greetingMessage;
   final Color primaryColor;
 
   const FloatingChatbotButton({
@@ -493,8 +487,6 @@ class FloatingChatbotButton extends StatefulWidget {
     required this.baseUrl,
     required this.apiKey,
     required this.chatbotId,
-    this.title,
-    this.greetingMessage,
     this.primaryColor = const Color(0xFF4F46E5),
   });
 
@@ -518,8 +510,6 @@ class _FloatingChatbotButtonState extends State<FloatingChatbotButton> {
               baseUrl: widget.baseUrl,
               apiKey: widget.apiKey,
               chatbotId: widget.chatbotId,
-              title: widget.title,
-              greetingMessage: widget.greetingMessage,
               primaryColor: widget.primaryColor,
               isFloating: true,
             ),
