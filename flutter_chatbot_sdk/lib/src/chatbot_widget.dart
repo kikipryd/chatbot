@@ -8,9 +8,9 @@ class ChatbotWidget extends StatefulWidget {
   final String apiKey;
   final String chatbotId;
 
-  // Customization styling options
-  final String title;
-  final String greetingMessage;
+  // Customization styling options (Optional local overrides, defaults will load from API)
+  final String? title;
+  final String? greetingMessage;
   final Color primaryColor;
   final Color accentColor;
   final Color backgroundColor;
@@ -26,8 +26,8 @@ class ChatbotWidget extends StatefulWidget {
     required this.baseUrl,
     required this.apiKey,
     required this.chatbotId,
-    this.title = 'AI Assistant',
-    this.greetingMessage = 'Halo! Ada yang bisa saya bantu hari ini?',
+    this.title,
+    this.greetingMessage,
     this.primaryColor = const Color(0xFF4F46E5), // Indigo
     this.accentColor = const Color(0xFF6366F1), // Indigo accent
     this.backgroundColor = const Color(0xFFF8FAFC), // Slate 50
@@ -54,6 +54,10 @@ class _ChatbotWidgetState extends State<ChatbotWidget> {
   bool _isStreaming = false;
   String _streamResponseBuffer = '';
 
+  // Dynamic values loaded from API
+  String _dynamicTitle = 'Loading assistant...';
+  String _dynamicGreetingMessage = 'Halo! Ada yang bisa saya bantu?';
+
   @override
   void initState() {
     super.initState();
@@ -67,14 +71,29 @@ class _ChatbotWidgetState extends State<ChatbotWidget> {
     });
 
     try {
-      // 1. Create a session on the backend
+      // 1. Fetch Chatbot dynamic Info from API first!
+      final info = await _client.getChatbotInfo(widget.chatbotId);
+      setState(() {
+        _dynamicTitle = widget.title ?? (info['name'] as String? ?? 'AI Assistant');
+        _dynamicGreetingMessage = widget.greetingMessage ?? (info['greeting_message'] as String? ?? 'Halo!');
+      });
+    } catch (e) {
+      print('Failed to fetch chatbot info: $e. Falling back to local overrides or defaults.');
+      setState(() {
+        _dynamicTitle = widget.title ?? 'AI Assistant';
+        _dynamicGreetingMessage = widget.greetingMessage ?? 'Halo! Ada yang bisa saya bantu hari ini?';
+      });
+    }
+
+    try {
+      // 2. Create a session on the backend
       final sid = await _client.createSession(widget.chatbotId);
       setState(() {
         _sessionId = sid;
-        // Add default welcome message
+        // Add default welcome message loaded from API
         _messages.add(ChatbotMessage(
           role: 'assistant',
-          content: widget.greetingMessage,
+          content: _dynamicGreetingMessage,
           createdAt: DateTime.now(),
         ));
       });
@@ -273,7 +292,7 @@ class _ChatbotWidgetState extends State<ChatbotWidget> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  widget.title,
+                  _dynamicTitle,
                   style: widget.titleTextStyle ?? const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -465,8 +484,8 @@ class FloatingChatbotButton extends StatefulWidget {
   final String baseUrl;
   final String apiKey;
   final String chatbotId;
-  final String title;
-  final String greetingMessage;
+  final String? title;
+  final String? greetingMessage;
   final Color primaryColor;
 
   const FloatingChatbotButton({
@@ -474,8 +493,8 @@ class FloatingChatbotButton extends StatefulWidget {
     required this.baseUrl,
     required this.apiKey,
     required this.chatbotId,
-    this.title = 'Asisten AI',
-    this.greetingMessage = 'Halo! Ada yang bisa saya bantu?',
+    this.title,
+    this.greetingMessage,
     this.primaryColor = const Color(0xFF4F46E5),
   });
 

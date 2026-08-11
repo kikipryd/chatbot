@@ -47,6 +47,7 @@ def get_chatbot_info(
         "id": chatbot.id,
         "name": chatbot.name,
         "system_prompt": chatbot.system_prompt,
+        "greeting_message": f"Halo! Saya adalah {chatbot.name}. Ada yang bisa saya bantu hari ini?",
         "created_at": chatbot.created_at
     }
 
