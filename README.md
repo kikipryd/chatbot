@@ -51,7 +51,7 @@ dependencies:
 ```
 
 ### 2. Use the Built-in `ChatbotWidget` (Embedded UI Pane)
-Embed the beautiful AI Chat Assistant directly inside any page or view:
+Embed the beautiful AI Chat Assistant directly inside any page or view. **Note:** *The Title and Greeting Message are automatically and dynamically loaded from your SaaS Dashboard (Database) via the API! There is no need to hardcode them in the client app!*
 ```dart
 import 'package:flutter/material.dart';
 import 'package:flutter_chatbot_sdk/flutter_chatbot_sdk.dart';
@@ -65,8 +65,6 @@ class MyPage extends StatelessWidget {
           baseUrl: 'http://localhost:8000',
           apiKey: 'YOUR_TENANT_PUBLIC_SDK_KEY',
           chatbotId: 'YOUR_CHATBOT_UUID',
-          title: 'Asisten Solusi Pintar',
-          greetingMessage: 'Halo! Ada yang bisa saya bantu terkait produk atau layanan kami?',
           primaryColor: Colors.deepPurple,
         ),
       ),
