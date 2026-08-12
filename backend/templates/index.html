@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SaaS AI Chatbot Builder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800">
+    <!-- Navbar -->
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
+                        <i class="fa-solid fa-robot mr-2"></i>SaaS Chatbot AI
+                    </span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    {% if tenant %}
+                        <span class="text-sm bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-full font-medium border border-indigo-100">
+                            <i class="fa-solid fa-gem mr-1"></i> {{ tenant.tier }} Plan
+                        </span>
+                        <div class="h-6 w-px bg-slate-200"></div>
+                        <span class="text-sm text-slate-600 font-medium">Hello, {{ tenant.name }}</span>
+                        <a href="/logout" class="text-sm text-rose-600 hover:text-rose-700 font-medium transition flex items-center">
+                            <i class="fa-solid fa-right-from-bracket mr-1.5"></i> Logout
+                        </a>
+                    {% else %}
+                        <a href="/login" class="text-sm text-indigo-600 hover:text-indigo-700 font-medium">Login</a>
+                        <a href="/register" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition">Get Started</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    {% if tenant %}
+    <!-- Main Content Grid -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+            <!-- Left Side: Dashboard / Controls -->
+            <div class="lg:col-span-4 space-y-6">
+
+                <!-- SaaS Integration Keys -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center">
+                        <i class="fa-solid fa-key mr-2 text-indigo-600"></i> API Integrasi SDK
+                    </h2>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Public SDK Key</label>
+                            <div class="flex items-center mt-1 bg-slate-50 border border-slate-200 rounded-lg p-2.5">
+                                <code id="apiKey" class="text-xs font-mono text-indigo-700 select-all overflow-x-auto whitespace-nowrap mr-2 flex-1">{{ tenant.api_key }}</code>
+                                <button onclick="copyToClipboard('apiKey')" class="text-slate-400 hover:text-indigo-600 transition p-1" title="Copy Key">
+                                    <i class="fa-solid fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <form action="/save-openai-override" method="post" class="border-t border-slate-100 pt-4">
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                                OpenAI API Key Override (Optional)
+                            </label>
+                            <div class="flex items-center mt-1 gap-2">
+                                <input type="password" name="openai_key" value="{{ tenant.openai_api_key_override or '' }}" placeholder="sk-proj-..." class="bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs font-mono flex-1 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+                                <button type="submit" class="bg-slate-900 text-white px-3 py-2 rounded-lg text-xs font-medium hover:bg-slate-800 transition">
+                                    Simpan
+                                </button>
+                            </div>
+                            <p class="text-[10px] text-slate-400 mt-1.5">Kosongkan untuk menggunakan master key default kami.</p>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Create/Select Chatbot -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center justify-between">
+                        <span class="flex items-center"><i class="fa-solid fa-robot mr-2 text-indigo-600"></i> Chatbots Anda</span>
+                        <button onclick="toggleModal('createBotModal', true)" class="text-xs bg-indigo-50 text-indigo-700 px-2.5 py-1.5 rounded-lg font-semibold hover:bg-indigo-100 transition">
+                            + Baru
+                        </button>
+                    </h2>
+
+                    {% if chatbots %}
+                        <div class="space-y-2">
+                            {% for bot in chatbots %}
+                                <a href="/?bot_id={{ bot.id }}" class="block p-3.5 rounded-xl border {% if selected_bot and selected_bot.id == bot.id %}border-indigo-600 bg-indigo-50/40{% else %}border-slate-200 hover:border-indigo-200 hover:bg-slate-50/50{% endif %} transition">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <h3 class="font-bold text-sm text-slate-900">{{ bot.name }}</h3>
+                                            <p class="text-xs text-slate-400 mt-0.5">ID: {{ bot.id }}</p>
+                                        </div>
+                                        <div class="flex items-center space-x-1">
+                                            <button onclick="deleteBot('{{ bot.id }}')" class="text-slate-400 hover:text-rose-600 p-1 rounded transition text-xs">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-8 text-slate-400">
+                            <i class="fa-solid fa-ghost text-2xl mb-2"></i>
+                            <p class="text-xs">Belum ada chatbot. Buatlah sekarang!</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+            </div>
+
+            <!-- Middle/Right Side: Selected Chatbot Workspace -->
+            <div class="lg:col-span-8">
+                {% if selected_bot %}
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+
+                        <!-- Chatbot Settings & Document Sources -->
+                        <div class="md:col-span-6 space-y-6">
+
+                            <!-- Prompt Settings -->
+                            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                                <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center">
+                                    <i class="fa-solid fa-sliders mr-2 text-indigo-600"></i> System Prompt & Konfigurasi
+                                </h3>
+                                <form action="/update-prompt" method="post" class="space-y-4">
+                                    <input type="hidden" name="bot_id" value="{{ selected_bot.id }}">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Nama Chatbot</label>
+                                        <input type="text" name="name" value="{{ selected_bot.name }}" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">System Prompt / Perilaku Bot</label>
+                                        <textarea name="system_prompt" rows="4" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none custom-scrollbar">{{ selected_bot.system_prompt }}</textarea>
+                                    </div>
+                                    <button type="submit" class="w-full bg-slate-900 text-white py-2 rounded-xl text-sm font-semibold hover:bg-slate-800 transition">
+                                        Simpan Perubahan
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- Document Upload -->
+                            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                                <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center justify-between">
+                                    <span class="flex items-center"><i class="fa-solid fa-file-pdf mr-2 text-indigo-600"></i> Sumber Data (RAG)</span>
+                                    <span class="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded font-medium">{{ selected_bot.documents|length }} File</span>
+                                </h3>
+
+                                <form action="/upload-document" method="post" enctype="multipart/form-data" class="mb-4">
+                                    <input type="hidden" name="bot_id" value="{{ selected_bot.id }}">
+                                    <div class="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center hover:border-indigo-400 transition cursor-pointer relative">
+                                        <input type="file" name="file" accept=".pdf,.docx" onchange="this.form.submit()" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                                        <i class="fa-solid fa-cloud-arrow-up text-2xl text-slate-400 mb-1.5"></i>
+                                        <p class="text-xs font-semibold text-indigo-600">Unggah File PDF atau DOCX</p>
+                                        <p class="text-[10px] text-slate-400 mt-0.5">Maksimal 10MB per dokumen</p>
+                                    </div>
+                                </form>
+
+                                {% if selected_bot.documents %}
+                                    <div class="space-y-2 max-h-56 overflow-y-auto custom-scrollbar pr-1">
+                                        {% for doc in selected_bot.documents %}
+                                            <div class="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-200/60">
+                                                <div class="flex items-center space-x-2.5 min-w-0">
+                                                    {% if doc.file_type == 'pdf' %}
+                                                        <i class="fa-solid fa-file-pdf text-rose-500 text-base"></i>
+                                                    {% else %}
+                                                        <i class="fa-solid fa-file-word text-blue-500 text-base"></i>
+                                                    {% endif %}
+                                                    <span class="text-xs font-semibold text-slate-700 truncate" title="{{ doc.filename }}">{{ doc.filename }}</span>
+                                                </div>
+                                                <button onclick="deleteDoc('{{ doc.id }}', '{{ selected_bot.id }}')" class="text-slate-400 hover:text-rose-600 p-1 rounded transition text-xs">
+                                                    <i class="fa-solid fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <div class="text-center py-8 text-slate-400 border border-dashed border-slate-100 rounded-xl">
+                                        <i class="fa-solid fa-file-zipper text-2xl mb-1.5"></i>
+                                        <p class="text-xs">Unggah dokumen untuk memberikan pengetahuan khusus ke chatbot ini.</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                        </div>
+
+                        <!-- Playground Playground Chat -->
+                        <div class="md:col-span-6">
+                            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[520px]">
+                                <!-- Playground Header -->
+                                <div class="bg-slate-900 p-4 text-white flex justify-between items-center">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="h-9 w-9 bg-indigo-500 rounded-full flex items-center justify-center font-bold text-sm shadow-inner">
+                                            {{ selected_bot.name[0]|upper }}
+                                        </div>
+                                        <div>
+                                            <h4 class="text-sm font-bold">{{ selected_bot.name }}</h4>
+                                            <p class="text-[10px] text-indigo-200 flex items-center">
+                                                <span class="h-2 w-2 bg-emerald-400 rounded-full inline-block mr-1"></span> Playground Testing Mode
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button onclick="clearChat()" class="text-xs text-slate-300 hover:text-white transition flex items-center">
+                                        <i class="fa-solid fa-rotate-left mr-1"></i> Reset
+                                    </button>
+                                </div>
+
+                                <!-- Messages Box -->
+                                <div id="chatHistory" class="flex-1 p-4 overflow-y-auto space-y-3.5 custom-scrollbar bg-slate-50">
+                                    <div class="flex items-start space-x-2.5">
+                                        <div class="h-7 w-7 bg-slate-200 text-slate-700 rounded-full flex items-center justify-center font-bold text-xs">
+                                            {{ selected_bot.name[0]|upper }}
+                                        </div>
+                                        <div class="bg-white border border-slate-200 px-3.5 py-2.5 rounded-2xl rounded-tl-none shadow-sm text-xs text-slate-700 max-w-[85%]">
+                                            Halo! Saya adalah <strong>{{ selected_bot.name }}</strong>.
+                                            Saya sudah dilatih menggunakan dokumen yang Anda unggah. Tanyakan apa saja!
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Input Box -->
+                                <div class="p-3 bg-white border-t border-slate-200">
+                                    <form id="chatForm" onsubmit="sendPlaygroundMessage(event)" class="flex gap-2">
+                                        <input type="text" id="userInput" placeholder="Ketik pesan untuk bot..." class="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+                                        <button type="submit" class="bg-indigo-600 text-white h-9 w-9 rounded-xl hover:bg-indigo-700 transition flex items-center justify-center">
+                                            <i class="fa-solid fa-paper-plane text-xs"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                {% else %}
+                    <div class="bg-white p-12 rounded-2xl border border-slate-200 shadow-sm text-center">
+                        <div class="max-w-md mx-auto">
+                            <i class="fa-solid fa-hand-pointer text-5xl text-indigo-500 mb-4 animate-bounce"></i>
+                            <h3 class="text-xl font-bold text-slate-900 mb-2">Workspace Chatbot Anda</h3>
+                            <p class="text-sm text-slate-500">Pilih salah satu chatbot di menu sebelah kiri atau buat chatbot baru untuk mulai mengunggah file PDF/Word, mengedit prompt, dan mengetes respon AI secara langsung.</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Create Chatbot Modal -->
+    <div id="createBotModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200/80 mx-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-slate-900 flex items-center">
+                    <i class="fa-solid fa-robot mr-2 text-indigo-600"></i> Buat Chatbot Baru
+                </h3>
+                <button onclick="toggleModal('createBotModal', false)" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form action="/create-chatbot" method="post" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Nama Chatbot</label>
+                    <input type="text" name="name" required placeholder="Misal: Customer Support Bot" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">System Prompt / Petunjuk Perilaku</label>
+                    <textarea name="system_prompt" rows="3" placeholder="Sebutkan siapa bot ini dan bagaimana dia harus menjawab pertanyaan user..." class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none custom-scrollbar">Anda adalah asisten AI yang sopan. Jawab pertanyaan hanya berdasarkan dokumen yang dilampirkan.</textarea>
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="toggleModal('createBotModal', false)" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 rounded-lg transition">Batal</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition">Buat Bot</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Scripting for live updates and UI actions -->
+    <script>
+        let currentSessionId = null;
+
+        function toggleModal(modalId, show) {
+            const modal = document.getElementById(modalId);
+            if (show) {
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function copyToClipboard(elementId) {
+            const el = document.getElementById(elementId);
+            navigator.clipboard.writeText(el.innerText).then(() => {
+                alert("Copied to clipboard: " + el.innerText);
+            }).catch(err => {
+                console.error("Failed to copy API Key", err);
+            });
+        }
+
+        function deleteBot(botId) {
+            if (confirm("Apakah Anda yakin ingin menghapus Chatbot ini beserta semua data dokumen di dalamnya? Tindakan ini permanen.")) {
+                window.location.href = `/delete-chatbot?bot_id=${botId}`;
+            }
+        }
+
+        function deleteDoc(docId, botId) {
+            if (confirm("Hapus dokumen ini dari basis pengetahuan Chatbot?")) {
+                window.location.href = `/delete-document?doc_id=${docId}&bot_id=${botId}`;
+            }
+        }
+
+        function clearChat() {
+            const historyDiv = document.getElementById('chatHistory');
+            const defaultName = "{{ selected_bot.name if selected_bot else 'Bot' }}";
+            historyDiv.innerHTML = `
+                <div class="flex items-start space-x-2.5">
+                    <div class="h-7 w-7 bg-slate-200 text-slate-700 rounded-full flex items-center justify-center font-bold text-xs">
+                        ${defaultName[0].toUpperCase()}
+                    </div>
+                    <div class="bg-white border border-slate-200 px-3.5 py-2.5 rounded-2xl rounded-tl-none shadow-sm text-xs text-slate-700 max-w-[85%]">
+                        Halo! Saya adalah <strong>${defaultName}</strong>. Saya sudah dilatih menggunakan dokumen yang Anda unggah. Tanyakan apa saja!
+                    </div>
+                </div>
+            `;
+            currentSessionId = null;
+        }
+
+        async function sendPlaygroundMessage(event) {
+            event.preventDefault();
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            input.value = '';
+
+            const historyDiv = document.getElementById('chatHistory');
+            const botName = "{{ selected_bot.name if selected_bot else 'Bot' }}";
+            const botId = "{{ selected_bot.id if selected_bot else '' }}";
+            const apiKey = "{{ tenant.api_key if tenant else '' }}";
+
+            // Append user message
+            historyDiv.innerHTML += `
+                <div class="flex items-start space-x-2.5 justify-end">
+                    <div class="bg-indigo-600 text-white px-3.5 py-2.5 rounded-2xl rounded-tr-none shadow-sm text-xs max-w-[85%]">
+                        ${message}
+                    </div>
+                </div>
+            `;
+            historyDiv.scrollTop = historyDiv.scrollHeight;
+
+            // Create response bubble with pulsing dots loader
+            const botBubbleId = 'bot-reply-' + Date.now();
+            historyDiv.innerHTML += `
+                <div class="flex items-start space-x-2.5">
+                    <div class="h-7 w-7 bg-slate-200 text-slate-700 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0">
+                        ${botName[0].toUpperCase()}
+                    </div>
+                    <div id="${botBubbleId}" class="bg-white border border-slate-200 px-3.5 py-2.5 rounded-2xl rounded-tl-none shadow-sm text-xs text-slate-700 max-w-[85%] min-w-[50px]">
+                        <span class="flex items-center gap-1"><span class="h-1.5 w-1.5 bg-slate-400 rounded-full animate-bounce"></span><span class="h-1.5 w-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:0.2s]"></span><span class="h-1.5 w-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:0.4s]"></span></span>
+                    </div>
+                </div>
+            `;
+            historyDiv.scrollTop = historyDiv.scrollHeight;
+
+            const botBubble = document.getElementById(botBubbleId);
+
+            // POST to Chat API with authorization using SSE Response
+            try {
+                const response = await fetch(`/api/v1/chatbots/${botId}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        session_id: currentSessionId
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error("Gagal berkomunikasi dengan API");
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder("utf-8");
+                let completeText = "";
+                let isFirstChunk = true;
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const chunkStr = decoder.decode(value);
+                    const lines = chunkStr.split("\n");
+
+                    for (const line of lines) {
+                        if (line.startsWith("data: ")) {
+                            const dataText = line.substring(6).trim();
+                            if (dataText === "[DONE]") {
+                                break;
+                            }
+                            try {
+                                const parsed = JSON.parse(dataText);
+                                if (parsed.session_id) {
+                                    currentSessionId = parsed.session_id;
+                                } else if (parsed.chunk) {
+                                    if (isFirstChunk) {
+                                        botBubble.innerHTML = "";
+                                        isFirstChunk = false;
+                                    }
+                                    completeText += parsed.chunk;
+                                    botBubble.innerText = completeText;
+                                    historyDiv.scrollTop = historyDiv.scrollHeight;
+                                }
+                            } catch (e) {
+                                // Skip unparseable lines
+                            }
+                        }
+                    }
+                }
+
+            } catch (err) {
+                botBubble.innerHTML = `<span class="text-rose-500 font-semibold flex items-center gap-1"><i class="fa-solid fa-triangle-exclamation"></i> Error: ${err.message}</span>`;
+            }
+        }
+    </script>
+</body>
+</html>
