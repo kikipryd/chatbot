@@ -797,102 +797,197 @@ class AvatarPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final baseRadius = size.width * 0.38;
 
-    // Smooth sinusoidal breath offsets
-    final breathOffset = math.sin(animationValue * 2 * math.pi) * 3.5;
-    final scaleOffset = 1.0 + (math.sin(animationValue * 2 * math.pi) * 0.015);
+    // 1. Organic Micro-movements (Multi-frequency sines/cosines for jitter, head tilt, and sway)
+    final double rad = animationValue * 2 * math.pi;
+    final double breathOffset = math.sin(rad) * 4.0 + math.cos(rad * 2) * 1.0;
+    final double headTilt = math.sin(rad * 0.5) * 0.03 + math.cos(rad * 2.5) * 0.005; // natural sway angle
+    final double headSwayX = math.cos(rad) * 2.5 + math.sin(rad * 3) * 0.5;
 
-    // 1. Draw glowing background sound waves
-    final wavePaint = Paint()
-      ..color = primaryColor.withOpacity(0.08)
-      ..style = PaintingStyle.fill;
+    // Active micro-vibrations when user/AI speaks
+    final double voiceVibe = (isAiSpeaking || isUserSpeaking) ? (math.sin(rad * 24) * 0.8) : 0.0;
 
+    // Total translation vector
+    final Offset headOffset = Offset(headSwayX + voiceVibe, breathOffset);
+
+    // 2. Draw glowing background radial sound waves
     if (isAiSpeaking || isUserSpeaking) {
-      final waveExpansion = 12.0 + math.sin(animationValue * 6 * math.pi) * 10.0;
-      canvas.drawCircle(center.translate(0, breathOffset), baseRadius + waveExpansion, wavePaint);
+      final double waveAmplitude = 14.0 + math.sin(rad * 8) * 8.0;
+      final Paint wavePaint = Paint()
+        ..style = PaintingStyle.fill
+        ..color = primaryColor.withOpacity(0.08);
 
-      wavePaint.color = primaryColor.withOpacity(0.04);
-      canvas.drawCircle(center.translate(0, breathOffset), baseRadius + waveExpansion * 2.2, wavePaint);
+      canvas.drawCircle(center + headOffset, baseRadius + waveAmplitude, wavePaint);
+
+      wavePaint.color = primaryColor.withOpacity(0.03);
+      canvas.drawCircle(center + headOffset, baseRadius + waveAmplitude * 2.2, wavePaint);
     }
 
-    // 2. Draw Avatar head/face circle
-    final facePaint = Paint()
-      ..shader = LinearGradient(
-        colors: [primaryColor.withOpacity(0.85), primaryColor.withOpacity(0.6)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ).createShader(Rect.fromCircle(center: center, radius: baseRadius))
+    // Apply head tilt translation & rotation matrices for premium organic movement
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    canvas.rotate(headTilt);
+    canvas.translate(-center.dx, -center.dy);
+
+    // 3. Draw realistic base head shadow for depth
+    final Paint shadowPaint = Paint()
+      ..color = Colors.black.withOpacity(0.15)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
+    canvas.drawCircle(center + headOffset + const Offset(0, 10), baseRadius, shadowPaint);
+
+    // 4. Draw face skin circle with realistic radial lighting gradient
+    final Paint facePaint = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          primaryColor.withOpacity(0.92),
+          primaryColor.withOpacity(0.70),
+          primaryColor.withOpacity(0.55),
+        ],
+        stops: const [0.0, 0.75, 1.0],
+        center: const Alignment(-0.25, -0.3), // Top-left light source simulation
+      ).createShader(Rect.fromCircle(center: center + headOffset, radius: baseRadius))
       ..style = PaintingStyle.fill;
 
-    canvas.drawCircle(center.translate(0, breathOffset), baseRadius * scaleOffset, facePaint);
+    canvas.drawCircle(center + headOffset, baseRadius, facePaint);
 
-    // 3. Draw eyes (Procedural blinking)
-    final eyePaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.fill;
+    // 5. Procedural Blinking & High-Fidelity Eye Gazing (Iris dilations / Saccadic Gaze Shifts)
+    // Eyes micro-gaze shifts (saccades) triggered periodically
+    double gazeX = 0.0;
+    double gazeY = 0.0;
+    if (animationValue > 0.35 && animationValue < 0.38) {
+      gazeX = -2.5; gazeY = -0.5; // Glancing left
+    } else if (animationValue > 0.40 && animationValue < 0.43) {
+      gazeX = 2.0; gazeY = 1.0;  // Glancing right and down
+    } else if (animationValue > 0.85 && animationValue < 0.88) {
+      gazeX = -1.0; gazeY = 1.5;  // Focus shift
+    }
 
-    final leftEyeCenter = Offset(center.dx - 22, center.dy - 12 + breathOffset);
-    final rightEyeCenter = Offset(center.dx + 22, center.dy - 12 + breathOffset);
+    final Offset leftEyeCenter = Offset(center.dx - 22, center.dy - 12) + headOffset;
+    final Offset rightEyeCenter = Offset(center.dx + 22, center.dy - 12) + headOffset;
 
-    // Blinking trigger based on anim time boundaries
-    final isBlinking = (animationValue > 0.08 && animationValue < 0.12) || (animationValue > 0.72 && animationValue < 0.76);
+    // Human eyelid blink speed profile: Very fast closing, slightly slower opening
+    final double blinkFraction = math.sin(rad);
+    // Trigger quick blink twice per periodic animation cycle
+    final bool isBlinking = (animationValue > 0.05 && animationValue < 0.09) || (animationValue > 0.68 && animationValue < 0.72);
 
     if (isBlinking) {
-      // Closed eye line
-      final eyeStroke = Paint()
-        ..color = Colors.white70
+      // Draw realistic closing curved eyelid lines
+      final Paint eyelidPaint = Paint()
+        ..color = Colors.white.withOpacity(0.85)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 3.5
         ..strokeCap = StrokeCap.round;
-      canvas.drawLine(leftEyeCenter.translate(-8, 0), leftEyeCenter.translate(8, 0), eyeStroke);
-      canvas.drawLine(rightEyeCenter.translate(-8, 0), rightEyeCenter.translate(8, 0), eyeStroke);
-    } else {
-      // Glowing open circular eyes
-      canvas.drawCircle(leftEyeCenter, 6.5, eyePaint);
-      canvas.drawCircle(rightEyeCenter, 6.5, eyePaint);
 
-      // Shiny pupil reflection
-      final pupilPaint = Paint()..color = primaryColor..style = PaintingStyle.fill;
-      canvas.drawCircle(leftEyeCenter.translate(-1.5, -1.5), 2.2, pupilPaint);
-      canvas.drawCircle(rightEyeCenter.translate(-1.5, -1.5), 2.2, pupilPaint);
+      final Path leftLid = Path()
+        ..moveTo(leftEyeCenter.dx - 9, leftEyeCenter.dy + 1)
+        ..quadraticBezierTo(leftEyeCenter.dx, leftEyeCenter.dy + 3, leftEyeCenter.dx + 9, leftEyeCenter.dy + 1);
+      final Path rightLid = Path()
+        ..moveTo(rightEyeCenter.dx - 9, rightEyeCenter.dy + 1)
+        ..quadraticBezierTo(rightEyeCenter.dx, rightEyeCenter.dy + 3, rightEyeCenter.dx + 9, rightEyeCenter.dy + 1);
+
+      canvas.drawPath(leftLid, eyelidPaint);
+      canvas.drawPath(rightLid, eyelidPaint);
+    } else {
+      // Draw premium white sclera/eyeballs
+      final Paint scleraPaint = Paint()
+        ..color = Colors.white
+        ..style = PaintingStyle.fill;
+      canvas.drawOval(Rect.fromCenter(center: leftEyeCenter, width: 17, height: 11), scleraPaint);
+      canvas.drawOval(Rect.fromCenter(center: rightEyeCenter, width: 17, height: 11), scleraPaint);
+
+      // Draw responsive, dilating Iris
+      final double irisRadius = 4.8 + (isAiSpeaking ? (math.sin(rad * 12) * 0.4) : 0.0);
+      final Paint irisPaint = Paint()
+        ..shader = RadialGradient(
+          colors: [
+            Colors.cyan.shade300,
+            Colors.teal.shade700,
+          ],
+        ).createShader(Rect.fromCircle(center: leftEyeCenter.translate(gazeX, gazeY), radius: irisRadius))
+        ..style = PaintingStyle.fill;
+
+      canvas.drawCircle(leftEyeCenter.translate(gazeX, gazeY), irisRadius, irisPaint);
+      canvas.drawCircle(rightEyeCenter.translate(gazeX, gazeY), irisRadius, irisPaint);
+
+      // Draw dark Pupil centers
+      final Paint pupilPaint = Paint()
+        ..color = const Color(0xFF1E293B)
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(leftEyeCenter.translate(gazeX, gazeY), 2.2, pupilPaint);
+      canvas.drawCircle(rightEyeCenter.translate(gazeX, gazeY), 2.2, pupilPaint);
+
+      // Specular light reflections (for highly realistic wet/glossy eye look)
+      final Paint reflectionPaint = Paint()..color = Colors.white..style = PaintingStyle.fill;
+      canvas.drawCircle(leftEyeCenter.translate(gazeX - 1.8, gazeY - 1.8), 1.2, reflectionPaint);
+      canvas.drawCircle(rightEyeCenter.translate(gazeX - 1.8, gazeY - 1.8), 1.2, reflectionPaint);
+      canvas.drawCircle(leftEyeCenter.translate(gazeX + 1.2, gazeY + 1.0), 0.5, reflectionPaint); // secondary reflection
+      canvas.drawCircle(rightEyeCenter.translate(gazeX + 1.2, gazeY + 1.0), 0.5, reflectionPaint);
     }
 
-    // 4. Draw responsive Lipsync Mouth
-    final mouthPaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.fill;
+    // 6. Draw organic, morphing lipsync Bezier Lips (not a simple stiff oval!)
+    final Offset mouthCenter = Offset(center.dx, center.dy + 20) + headOffset;
 
-    final mouthCenter = Offset(center.dx, center.dy + 20 + breathOffset);
+    if (mouthOpening > 0.05) {
+      // Dynamic talking mouth opening/closing with Bezier curve lip thickness
+      final double mouthH = 3.0 + (mouthOpening * 15.0);
+      final double mouthW = 16.0 - (mouthOpening * 2.0);
 
-    if (mouthOpening > 0.1) {
-      // Dynamic oval/ellipse shape representing talking state based on RAG voice amplitudes
-      final mouthHeight = 4.0 + (mouthOpening * 16.0);
-      final mouthWidth = 14.0 - (mouthOpening * 3.0);
+      // Inside mouth cavity (dark red-violet gradient)
+      final Paint cavityPaint = Paint()
+        ..shader = RadialGradient(
+          colors: [
+            const Color(0xFF881337), // Rose deep dark
+            const Color(0xFF4C0519),
+          ],
+        ).createShader(Rect.fromCenter(center: mouthCenter, width: mouthW, height: mouthH))
+        ..style = PaintingStyle.fill;
+
       canvas.drawOval(
-        Rect.fromCenter(center: mouthCenter, width: mouthWidth, height: mouthHeight),
-        mouthPaint,
+        Rect.fromCenter(center: mouthCenter, width: mouthW, height: mouthH),
+        cavityPaint,
       );
-    } else {
-      // Closed, smiling/relaxed mouth line
-      final smilePaint = Paint()
-        ..color = Colors.white70
+
+      // Upper & Lower lips drawing curves for high-fidelity look
+      final Paint lipPaint = Paint()
+        ..color = Colors.white.withOpacity(0.9)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 3.0
+        ..strokeWidth = 2.5
         ..strokeCap = StrokeCap.round;
 
-      final smilePath = Path()
-        ..moveTo(mouthCenter.dx - 12, mouthCenter.dy - 1)
-        ..quadraticBezierTo(mouthCenter.dx, mouthCenter.dy + 4, mouthCenter.dx + 12, mouthCenter.dy - 1);
+      final Path upperLip = Path()
+        ..moveTo(mouthCenter.dx - (mouthW / 2) - 1, mouthCenter.dy)
+        ..quadraticBezierTo(mouthCenter.dx, mouthCenter.dy - (mouthH / 2) - 1.5, mouthCenter.dx + (mouthW / 2) + 1, mouthCenter.dy);
+      final Path lowerLip = Path()
+        ..moveTo(mouthCenter.dx - (mouthW / 2) - 1, mouthCenter.dy)
+        ..quadraticBezierTo(mouthCenter.dx, mouthCenter.dy + (mouthH / 2) + 1.5, mouthCenter.dx + (mouthW / 2) + 1, mouthCenter.dy);
+
+      canvas.drawPath(upperLip, lipPaint);
+      canvas.drawPath(lowerLip, lipPaint);
+
+    } else {
+      // Relaxed, natural, organic smile curved line
+      final Paint smilePaint = Paint()
+        ..color = Colors.white.withOpacity(0.8)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.8
+        ..strokeCap = StrokeCap.round;
+
+      final Path smilePath = Path()
+        ..moveTo(mouthCenter.dx - 12, mouthCenter.dy - 1.5)
+        ..quadraticBezierTo(mouthCenter.dx, mouthCenter.dy + 3.0, mouthCenter.dx + 12, mouthCenter.dy - 1.5);
       canvas.drawPath(smilePath, smilePaint);
     }
 
-    // 5. Head accessory detail (Futuristic headband/earphones)
-    final detailPaint = Paint()
-      ..color = Colors.white30
+    // Restore rotation state
+    canvas.restore();
+
+    // 7. Head accessory details (Futuristic translucent headphones band)
+    final Paint detailPaint = Paint()
+      ..color = Colors.white.withOpacity(0.18)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 4.0;
+      ..strokeWidth = 3.5;
 
     canvas.drawArc(
-      Rect.fromCircle(center: center.translate(0, breathOffset), radius: baseRadius * scaleOffset),
+      Rect.fromCircle(center: center + headOffset, radius: baseRadius),
       math.pi,
       math.pi,
       false,
