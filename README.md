@@ -5,11 +5,16 @@ A powerful, highly scalable, and fully functional **SaaS AI Chatbot platform** u
 ---
 
 ## 📹 Demo & Screen Recording
-Below is a video walkthrough demonstrating the fully functional **SaaS Dashboard Workspace**, RAG Document Parsing, the dynamic **Live Voice Mode**, and our **procedurally animated realistic lipsync avatar**:
+Berikut adalah panduan visual demonstrasi untuk **SaaS Dashboard Workspace**, RAG Document Parsing, **Live Voice Mode**, dan **procedurally animated realistic lipsync avatar**:
 
-https://github.com/user-attachments/assets/demo-video-placeholder.mp4
+### ⚡ Tonton Rekaman Demo:
+Silakan rekam layar aplikasi Anda dan simpan ke dalam folder `assets/demo_voice_mode.mp4`.
 
-> **How to view the recording:** You can find the screen recording file `assets/demo_video.webm` or `assets/demo_video.mp4` inside the repository to see the smooth, organic lipsync mouth morphing, blink saccades, and SSE response streaming in action!
+```markdown
+![Demo Aplikasi](assets/demo_voice_mode.mp4)
+```
+
+> **Catatan:** Setelah Anda mengunggah file rekaman video berformat `.mp4` ke folder `assets/demo_voice_mode.mp4`, GitHub akan merender video pemutaran suara dan gerakan animasi avatar lipsync secara interaktif di halaman ini!
 
 ---
 
