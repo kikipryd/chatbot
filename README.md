@@ -4,6 +4,15 @@ A powerful, highly scalable, and fully functional **SaaS AI Chatbot platform** u
 
 ---
 
+## 📹 Demo & Screen Recording
+Below is a video walkthrough demonstrating the fully functional **SaaS Dashboard Workspace**, RAG Document Parsing, the dynamic **Live Voice Mode**, and our **procedurally animated realistic lipsync avatar**:
+
+https://github.com/user-attachments/assets/demo-video-placeholder.mp4
+
+> **How to view the recording:** You can find the screen recording file `assets/demo_video.webm` or `assets/demo_video.mp4` inside the repository to see the smooth, organic lipsync mouth morphing, blink saccades, and SSE response streaming in action!
+
+---
+
 ## 🏗️ Architecture Overview
 
 The system is designed with scalability and high-concurrency in mind:
